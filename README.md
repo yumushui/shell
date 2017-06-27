@@ -30,12 +30,12 @@
     子shell及shell嵌套模式应用
 
 ##shell使用特性
---------------------------
+
 ###常见企业shell使用
 ###平时遇到的重要shell片段总结
 
 ##shell脚本实际案例
----------------------------------
+
 ###我在实际环境中编写的一些shell脚本
 
 this is some shell scripts for myself.

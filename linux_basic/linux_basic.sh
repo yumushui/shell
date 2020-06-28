@@ -217,6 +217,201 @@
 # 03 系统管理篇
 ####################################
 
+## 正则表达式
+-- 正则表达式是什么
+    对字符串操作的一组逻辑公式
+    用于对符合规则的字符串进行查找和替换
+
+-- 初识元字符
+    ^
+    $
+    *
+
+-- 扩展元字符
+
+## 文本与文件查找
+-- grep
+    -l 忽略大小写
+    -v 反转
+    -a 处理二进制文件
+    -R 递归方式
+
+-- find
+    -name 按照文件名搜索
+    -perm 按照权限搜索
+    -user 按照属主搜索
+    -type 按照文件类型搜索
+
+## 软件安装与更新
+-- rpm 安装
+    -i 安装
+    -q 查询
+    -U 升级
+    -e 卸载
+
+-- yum 安装
+    安装 yum install xxx (软件名)
+    卸载 yum remove xxx
+    更新 yum update xxx
+
+-- 源代码编译安装
+    ./configure
+    make
+    make install
+
+
+## 网络配置
+-- 网络配置命令
+    ifconfig 查看和配置网络接口
+    ip 查看和配置网络接口、路由
+    netstat 查看进程监听端口状态
+    network 与 NetworkManager 网络管理脚本
+
+-- 配置文件
+    ifcfg-eth0 eth0 网卡配置文件
+    networking 主机名配置文件
+    resolv.conf 域名配置文件
+
+## 防火墙
+### SELinux
+-- 访问控制方式分类
+    DAC 自主访问控制
+    MAC 强制访问控制
+
+-- 常用命令
+    getenforce 查看 SELinux状态
+    setenforce 修改访问状态
+
+-- 配置文件
+    /etc/selinux/config
+    enforcing 强制控制
+    permissive 通知但不强制控制
+    disable 禁用访问控制
+
+
+### iptables
+-- 表
+    fillter 用于过滤
+    nat 用于地址转换
+
+-- 链
+    INPUT 进入本主机方向
+    OUTPUT 本主机发出方向
+    FORWARD 转发方向
+    PREROUTING 路由前转换
+    POSTROUTING 路由后转换
+
+-- 选项
+    -i -o 接口
+    -s -d IP 地址 / 子网掩码
+    -p tcp/udp 指定协议
+        --sport 源端口
+	--dport 目的端口
+    -j 动作
+        ACCEPT 允许次规则匹配的数据包通过
+	DROP 丢弃此规则匹配的数据包
+	REJECT 拒绝此规则匹配的数据包并返回 rst 包
+	SNAT 源地址转换
+	DNAT 目的地址转换
+	MASQUERADE 动态源地址转换
+
+### tcpdump
+-- 保存和读取规则
+    -f filename 从文件读取已抓取的数据包
+    -w filename 讲抓取的数据包保存至文件
+
+-- 常用选项
+    -v 显示详细信息
+    -n 不将IP地址解析为主机名
+    -i 接口
+    host 主机
+    port 端口
+
+
+## 服务与日志
+-- 服务状态的查看命令
+    service 用法： service 服务名称 start | stop | restart | status 
+    systemctl 用法： systemctl start | stop | restart | status 服务名称.service
+
+-- 服务配置文件的编写
+
+-- 常用系统日志
+    /var/log 系统日志默认目录
+    message 系统日志
+    dmesg 内核启动日志
+    secure 安全日志
+
+-- 应用程序日志
+
+
+
+## 磁盘分区
+-- 链接文件
+    符号链接
+    硬链接
+
+-- mount 挂载命令
+    -t 文件系统类型
+    -o 挂载选项
+        ro 只读挂载
+	rw 读写挂载
+	remount 重挂载
+
+
+-- 配置文件 /etc/fstab
+
+
+## 文件系统
+-- 常用命令
+    fdisk 分区工具
+        -l (小写L) 查看分区信息
+	fdisk /dev/sdX 为某一个存储分区
+    df 查看分区使用空间大小
+    du 查看文件夹使用空间大小
+    mkfs 格式化命令
+        mkfs.ext4 格式化为 ext4 文件系统
+	mkfs.xfs 格式化为 XFS 文件系统
+
+-- ext4
+
+
+## 逻辑卷与LVM
+-- 卷用于分层管理磁盘
+-- LVM分为三层
+    PV 物理卷
+    VG 卷组
+    LV 逻辑卷
+-- 常用命令
+    pvcreate 建立 PV
+    pvs 查看 PV
+    vgcreate 建立 VG
+    vgs 查看 VG
+    lvcreate 建立 LV
+    lvs 查看 LV
+    lvextend 扩展 LV
+
+
+## 系统启动与故障修复
+-- 系统启动过程简述
+    BIOS 选择启动设备
+    MBR 硬盘可引导扇区
+    GRUB Linux 系统可引导工具
+    内核
+    init 或 systemd
+    service 服务 或 systemd 服务
+        CentOS 7 以前为 init
+	CentOS 7 以前仅有 service 服务
+    启动 tty 等待用户登陆
+
+-- 更新内核版本
+    RPM方式更新
+        安装速度快
+        没有更新的版本
+    源代码编译方式更新
+        可以使用最新的版本
+	编译时间较长
+
+
 
 ####################################
 # 04 Shel篇

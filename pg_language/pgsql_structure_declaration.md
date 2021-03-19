@@ -637,7 +637,7 @@ select generate_series('2015-01-01'::date,'2016-01-27','1 month');
 
 select generate_series((now() AT TIME ZONE 'UTC')::date,(now() AT TIME ZONE 'UTC' + interval '12' month)::date,'1 month');
 
-
+```
 CREATE OR REPLACE FUNCTION public.date_loop_01() RETURNS integer
     LANGUAGE plpgsql
     AS $_$
@@ -661,8 +661,10 @@ CREATE OR REPLACE FUNCTION public.date_loop_01() RETURNS integer
             RAISE NOTICE 'Quantity month_tag here is %', month_tag;
 
             parent_table = 'parti01';
-            partition_date_month := to_char((month_tag)::date,'YYYYMM');
-            partition_date_month_next := to_char((month_tag + interval ' 11 month')::date,'YYYYMM');
+            select to_char((month_tag)::date,'YYYYMM') INTO partition_date_month;
+            select to_char(((month_tag)::date + interval ' 11 month')::date,'YYYYMM') INTO partition_date_month_next;
+            --partition_date_month := to_char((month_tag)::date,'YYYYMM');
+            --partition_date_month_next := to_char((month_tag + interval ' 11 month')::date,'YYYYMM');
             partition := parent_table || '_p' || partition_date_month;
             partition_next := parent_table || '_p' || partition_date_month_next;
             RAISE NOTICE 'Quantity partition here is %', partition;
@@ -672,7 +674,95 @@ CREATE OR REPLACE FUNCTION public.date_loop_01() RETURNS integer
       RETURN NULL;
     END;
 $_$;
+```
 
+The executed result is:
+```
+dba_test_db@pgm-j6cad4y05qe3g03y132790.pg.rds.aliyuncs.com:1921=>CREATE OR REPLACE FUNCTION public.date_loop_01() RETURNS integer
+dba_test_db->     LANGUAGE plpgsql
+dba_test_db->     AS $_$
+dba_test_db$>     DECLARE
+dba_test_db$>       parent_table TEXT;
+dba_test_db$>       partition_key TEXT;
+dba_test_db$>       partition TEXT;
+dba_test_db$>       partition_next TEXT;
+dba_test_db$>       partition_date_month TEXT;
+dba_test_db$>       partition_date_month_next TEXT;
+dba_test_db$>       month_tag TEXT;
+dba_test_db$>     BEGIN
+dba_test_db$>         FOR month_tag IN
+dba_test_db$>            SELECT generate_series(
+dba_test_db$>                          (now() AT TIME ZONE 'UTC')::date,
+dba_test_db$>                          (now() AT TIME ZONE 'UTC' + interval '12' month)::date,
+dba_test_db$>                          '1 month')
+dba_test_db$>         LOOP
+dba_test_db$>
+dba_test_db$>             -- Now "mviews" has one record with information about the materialized view
+dba_test_db$>             RAISE NOTICE 'Quantity month_tag here is %', month_tag;
+dba_test_db$>
+dba_test_db$>             parent_table = 'parti01';
+dba_test_db$>             select to_char((month_tag)::date,'YYYYMM') INTO partition_date_month;
+dba_test_db$>             select to_char(((month_tag)::date + interval ' 11 month')::date,'YYYYMM') INTO partition_date_month_next;
+dba_test_db$>             --partition_date_month := to_char((month_tag)::date,'YYYYMM');
+dba_test_db$>             --partition_date_month_next := to_char((month_tag + interval ' 11 month')::date,'YYYYMM');
+dba_test_db$>             partition := parent_table || '_p' || partition_date_month;
+dba_test_db$>             partition_next := parent_table || '_p' || partition_date_month_next;
+dba_test_db$>             RAISE NOTICE 'Quantity partition here is %', partition;
+dba_test_db$>
+dba_test_db$>         END LOOP;
+dba_test_db$>
+dba_test_db$>       RETURN NULL;
+dba_test_db$>     END;
+dba_test_db$> $_$;
+CREATE FUNCTION
+dba_test_db@pgm-j6cad4y05qe3g03y132790.pg.rds.aliyuncs.com:1921=>```
+dba_test_db->
+dba_test_db-> ^C
+dba_test_db@pgm-j6cad4y05qe3g03y132790.pg.rds.aliyuncs.com:1921=>select public.date_loop_01();
+NOTICE:  Quantity month_tag here is 2021-03-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202103
+NOTICE:  Quantity month_tag here is 2021-04-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202104
+NOTICE:  Quantity month_tag here is 2021-05-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202105
+NOTICE:  Quantity month_tag here is 2021-06-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202106
+NOTICE:  Quantity month_tag here is 2021-07-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202107
+NOTICE:  Quantity month_tag here is 2021-08-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202108
+NOTICE:  Quantity month_tag here is 2021-09-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202109
+NOTICE:  Quantity month_tag here is 2021-10-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202110
+NOTICE:  Quantity month_tag here is 2021-11-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202111
+NOTICE:  Quantity month_tag here is 2021-12-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202112
+NOTICE:  Quantity month_tag here is 2022-01-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202201
+NOTICE:  Quantity month_tag here is 2022-02-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202202
+NOTICE:  Quantity month_tag here is 2022-03-19 00:00:00+08
+NOTICE:  Quantity partition here is parti01_p202203
+ date_loop_01
+--------------
+
+(1 row)
+```
+
+Unrelated, but: you don't need SELECT statements to assign variable values if you don't retrieve those values from a table.
+
+SELECT extract(epoch FROM now())::integer INTO current_ts;
+can be simplified to:
+
+current_ts := extract(epoch FROM now())::integer;
+and
+
+SELECT floor(int_min + (int_max - int_min + 1) * random()) INTO new_identity_id;
+to
+
+new_identity_id := floor(int_min + (int_max - int_min + 1) * random());
 
 
 CREATE FUNCTION somefunc_for() RETURNS integer AS $$
@@ -706,7 +796,7 @@ $$ LANGUAGE plpgsql;
 https://stackoverflow.com/questions/41367728/using-variables-in-a-pl-pgsql-function
 
 This is my function:
-
+```
 CREATE OR REPLACE FUNCTION app.create_identity(email varchar,passwd varchar)
 RETURNS integer as $$
 DECLARE
@@ -731,7 +821,7 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-
+```
 
 
 如果下界大于上界（或者在REVERSE情况下是小于），循环体根本不会被执行。而且不会抛出任何错误。

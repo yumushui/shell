@@ -556,6 +556,184 @@ FOR i IN REVERSE 10..1 BY 2 LOOP
 END LOOP;
 ```
 
+
+CREATE OR REPLACE FUNCTION public.somefunc_for()
+ RETURNS integer
+ LANGUAGE plpgsql
+AS $function$
+<< outerblock >>
+DECLARE
+    quantity integer := 30;
+    partition_date_month TEXT;
+    partition_date_month_next TEXT;
+    temp_char TEXT;
+BEGIN
+    RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 30
+
+    FOR i IN 0..10 LOOP
+        quantity := 1 + i;
+        RAISE NOTICE 'Quantity here is %', quantity;
+        RAISE NOTICE 'Quantity i here is %', quantity;
+        -- temp_char := 'interval ''' || quantity || ' month ''';
+        partition_date_month := to_char((now() AT TIME ZONE 'UTC' + interval  '''||  i ||'''  month)::date,'YYYYMM');
+        --partition_date_month_next := 'to_char((now() AT TIME ZONE '''|| 'UTC' || '''+ interval ''' || :quantity||  ' month''' || ')::date, ''' || 'YYYYMM' ||''')';
+        partition_date_month_next := to_char((now() AT TIME ZONE  'UTC' + interval  '''||  quantity ||'''  month)::date, 'YYYYMM');
+        RAISE NOTICE 'partition_date_month here is %', partition_date_month;
+        RAISE NOTICE 'partition_date_month here is %', partition_date_month_next;
+        --
+        -- 创建一个子块
+        --
+        DECLARE
+            quantity integer := 80;
+        BEGIN
+            RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 80
+            RAISE NOTICE 'Outer quantity here is %', outerblock.quantity;  -- Prints 50
+        END;
+
+        -- RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 50
+
+
+    END LOOP;
+
+    RETURN quantity;
+END;
+$function$;
+
+
+\set quantity 3::interge
+
+select now() AT TIME ZONE  'UTC' + interval  :'quantity'  month;
+
+=>select now() AT TIME ZONE  'UTC' + interval  :'quantity'  month;
+          ?column?
+----------------------------
+ 2021-06-19 10:56:31.597099
+(1 row)
+
+=>select to_char((now() AT TIME ZONE  'UTC' + interval  :'quantity'  month)::date, 'YYYYMM');
+ to_char
+---------
+ 202106
+(1 row)
+
+
+select generate_series('2015-01-01'::date,'2016-01-27','1 month');
+    generate_series
+------------------------
+ 2015-01-01 00:00:00+08
+ 2015-02-01 00:00:00+08
+ 2015-03-01 00:00:00+08
+ 2015-04-01 00:00:00+08
+ 2015-05-01 00:00:00+08
+ 2015-06-01 00:00:00+08
+ 2015-07-01 00:00:00+08
+ 2015-08-01 00:00:00+08
+ 2015-09-01 00:00:00+08
+ 2015-10-01 00:00:00+08
+ 2015-11-01 00:00:00+08
+ 2015-12-01 00:00:00+08
+ 2016-01-01 00:00:00+08
+(13 rows)
+
+select generate_series((now() AT TIME ZONE 'UTC')::date,(now() AT TIME ZONE 'UTC' + interval '12' month)::date,'1 month');
+
+
+CREATE OR REPLACE FUNCTION public.date_loop_01() RETURNS integer
+    LANGUAGE plpgsql
+    AS $_$
+    DECLARE
+      parent_table TEXT;
+      partition_key TEXT;
+      partition TEXT;
+      partition_next TEXT;
+      partition_date_month TEXT;
+      partition_date_month_next TEXT;
+      month_tag TEXT;
+    BEGIN
+        FOR month_tag IN
+           SELECT generate_series(
+                         (now() AT TIME ZONE 'UTC')::date,
+                         (now() AT TIME ZONE 'UTC' + interval '12' month)::date,
+                         '1 month')
+        LOOP
+
+            -- Now "mviews" has one record with information about the materialized view
+            RAISE NOTICE 'Quantity month_tag here is %', month_tag;
+
+            parent_table = 'parti01';
+            partition_date_month := to_char((month_tag)::date,'YYYYMM');
+            partition_date_month_next := to_char((month_tag + interval ' 11 month')::date,'YYYYMM');
+            partition := parent_table || '_p' || partition_date_month;
+            partition_next := parent_table || '_p' || partition_date_month_next;
+            RAISE NOTICE 'Quantity partition here is %', partition;
+
+        END LOOP;
+
+      RETURN NULL;
+    END;
+$_$;
+
+
+
+CREATE FUNCTION somefunc_for() RETURNS integer AS $$
+<< outerblock >>
+DECLARE
+    quantity integer := 30;
+BEGIN
+    RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 30
+
+    FOR i IN 1..10 LOOP
+        quantity := 50 + i;
+        --
+        -- 创建一个子块
+        --
+        DECLARE
+            quantity integer := 80;
+        BEGIN
+            RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 80
+            RAISE NOTICE 'Outer quantity here is %', outerblock.quantity;  -- Prints 50
+        END;
+
+        RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 50
+
+    END LOOP;
+
+    RETURN quantity;
+END;
+$$ LANGUAGE plpgsql;
+
+
+https://stackoverflow.com/questions/41367728/using-variables-in-a-pl-pgsql-function
+
+This is my function:
+
+CREATE OR REPLACE FUNCTION app.create_identity(email varchar,passwd varchar)
+RETURNS integer as $$
+DECLARE
+    current_ts          integer;
+    new_identity_id     integer;
+    int_max             integer;
+    int_min             integer;
+BEGIN
+    SELECT extract(epoch FROM now())::integer INTO current_ts;
+    int_min:=-2147483648;
+    int_max:= 2147483647;
+    LOOP
+        BEGIN
+            SELECT floor(int_min + (int_max - int_min + 1) * random()) INTO new_identity_id;
+            IF new_identity_id != 0 THEN
+                INSERT into app.identity(identity_id,date_inserted,email,password) values(identity_id,current_ts,''email'',''passwd'');
+                RETURN new_identity_id;
+            END IF;
+        EXCEPTION
+            WHEN unique_violation THEN
+        END;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 如果下界大于上界（或者在REVERSE情况下是小于），循环体根本不会被执行。而且不会抛出任何错误。
 
 如果一个label被附加到FOR循环，那么整数循环变量可以用一个使用那个label的限定名引用。

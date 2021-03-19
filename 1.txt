@@ -1,0 +1,11 @@
+GRANT ALL PRIVILEGES ON database notification TO notification_admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO notification_admin;
+ALTER DEFAULT PRIVILEGES FOR USER airwallex IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO notification_admin;
+ALTER DEFAULT PRIVILEGES FOR USER notification_admin IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO notification_admin;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO notification_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO notification_rw;
+ALTER DEFAULT PRIVILEGES FOR USER airwallex IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO notification_rw;
+
+grant select ON ALL TABLES IN SCHEMA public TO notification_r;
+ALTER DEFAULT PRIVILEGES FOR USER airwallex IN SCHEMA public GRANT select ON TABLES TO notification_r;

@@ -707,7 +707,7 @@ dba_test_db$>             --partition_date_month := to_char((month_tag)::date,'Y
 dba_test_db$>             --partition_date_month_next := to_char((month_tag + interval ' 11 month')::date,'YYYYMM');
 dba_test_db$>             partition := parent_table || '_p' || partition_date_month;
 dba_test_db$>             partition_next := parent_table || '_p' || partition_date_month_next;
-dba_test_db$>             RAISE NOTICE 'Quantity partition here is %', partition;
+dba_test_db$>             
 dba_test_db$>
 dba_test_db$>         END LOOP;
 dba_test_db$>
